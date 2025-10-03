@@ -52,6 +52,7 @@ project(${PROJECT_NAME})
 add_executable(${PROJECT_NAME} ${INC} ${SRC} main.cpp)
 
 # Compiler Flags & Macros Go here.
+set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}/)
 
 # Set Include Directories
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc/)
