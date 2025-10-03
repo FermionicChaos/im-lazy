@@ -1,0 +1,7 @@
+build/
+prj/
+external/
+extern/
+dep/
+bin/
+lib/
