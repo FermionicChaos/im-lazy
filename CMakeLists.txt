@@ -33,7 +33,10 @@ endfunction()
 
 include(FetchContent)
 
-# Dependencies go here.
+# Dependencies go here. (Examples commented out)
+# fetch_dependency(https://github.com/FermionicChaos/geodesy-math.git master geodesy-math)
+# fetch_dependency(https://github.com/FermionicChaos/geodesy-gpu.git master geodesy-gpu VULKAN_SDK_VERSION=1.4.321.0)
+# fetch_dependency(https://github.com/glfw/glfw.git 3.4 glfw BUILD_SHARED_LIBS=OFF GLFW_BUILD_WAYLAND=OFF)
 
 set(PROJECT_NAME "im-lazy")
 
@@ -55,7 +58,12 @@ add_executable(${PROJECT_NAME} ${INC} ${SRC} main.cpp)
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}/)
 
 # Set Include Directories
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inc/)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc/)
+# target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-math-src/inc/)
+# target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-gpu-src/inc/)
+# target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/glfw-src/include/)
 
 # Link Libraries Go here.
+# target_link_libraries(${PROJECT_NAME} PRIVATE geodesy-gpu)
+# target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 
