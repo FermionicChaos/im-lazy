@@ -42,11 +42,8 @@ int main(int aArgCount, char* aArgValues[]) {
 
 		// Setup Rendering Contexts
 		{
-			std::set<std::string> InstanceLayers;
+			std::set<std::string> InstanceLayers = { "VK_LAYER_KHRONOS_validation" };
 			std::set<std::string> InstanceExtensions = load_glfw_instance_extensions();
-
-			InstanceLayers.insert("VK_LAYER_KHRONOS_validation");
-			// InstanceExtensions.insert(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -55,12 +52,7 @@ int main(int aArgCount, char* aArgValues[]) {
 			Window = glfwCreateWindow(Resolution[0], Resolution[1], "Vulkan Window", NULL, NULL);
 
 			// Insure instances gets cleared before glfwTerminate is called.
-			Instance = geodesy::make<gpu::instance>(
-				(void*)vkGetInstanceProcAddr,
-				std::array<int, 3>{ 1, 2, 0 },
-				InstanceLayers,
-				InstanceExtensions
-			);
+			Instance = geodesy::make<gpu::instance>((void*)vkGetInstanceProcAddr, std::array<int, 3>{ 1, 2, 0 }, InstanceLayers, InstanceExtensions);
 
 			// Create Vulkan Surface for window.
 			glfwCreateWindowSurface(Instance->Handle, Window, NULL, &Surface);
@@ -75,18 +67,14 @@ int main(int aArgCount, char* aArgValues[]) {
 			}
 
 			std::set<std::string> ContextLayers;
-			std::set<std::string> ContextExtensions;
-
-			// Load in device extensions
-			ContextExtensions.insert(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+			std::set<std::string> ContextExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+			std::vector<unsigned int> ContextOperations = {
+				gpu::device::operation::GRAPHICS | gpu::device::operation::COMPUTE,
+				gpu::device::operation::TRANSFER
+			};
 
 			// GPU Device Context
-			Context = Instance->create_context(
-				PrimaryDevice,
-				std::vector<unsigned int>{ gpu::device::operation::GRAPHICS | gpu::device::operation::COMPUTE, gpu::device::operation::TRANSFER },
-				ContextLayers,
-				ContextExtensions
-			);
+			Context = Instance->create_context(PrimaryDevice, ContextOperations, ContextLayers, ContextExtensions);
 
 			gpu::swapchain::create_info SwapchainCreateInfo;
 			SwapchainCreateInfo.FrameCount					= 3;
@@ -211,7 +199,7 @@ int main(int aArgCount, char* aArgValues[]) {
 				{
 					std::vector<std::shared_ptr<gpu::image>> imageVec = { Swapchain->Image[i]["Color"] };
 					std::vector<std::shared_ptr<gpu::buffer>> bufferVec = { VertexBuffer };
-					auto CommandBuffer = CommandPool->create<gpu::executable_call>(RasterizationPipeline, imageVec, bufferVec);
+					auto CommandBuffer = CommandPool->create<gpu::rasterization_call>(RasterizationPipeline, imageVec, bufferVec);
 					DrawCall[i] = CommandBuffer;
 				}
 
