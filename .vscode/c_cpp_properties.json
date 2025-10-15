@@ -4,6 +4,10 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
+                "${workspaceFolder}/dep/",
+                "${workspaceFolder}/dep/geodesy-math-src/inc/",
+                "${workspaceFolder}/dep/geodesy-gpu-src/inc/",
+                "${workspaceFolder}/dep/glfw-src/include/",
                 ""
             ],
             "defines": [],
