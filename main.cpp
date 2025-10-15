@@ -187,12 +187,27 @@ int main(int aArgCount, char* aArgValues[]) {
 			for (size_t i = 0; i < Swapchain->Image.size(); ++i) {
 				DrawCalls[i] = gpu::executable_call(
 					Context,
-					Context->create<gpu::command_pool>(gpu::device::operation::GRAPHICS),
+					CommandPool,
 					RasterizationPipeline,
 					{ Swapchain->Image[i]["Color"] },
 					{ VertexBuffer }
 				);
 			}
+		}
+
+		// Main Loop
+		while (!glfwWindowShouldClose(Window)) {
+			glfwPollEvents();
+
+			// // Get index of next swapchain image.
+			// VkResult Result = Swapchain->next_frame();
+
+			// // Acquire next image from swapchain.
+			// std::pair<std::shared_ptr<gpu::semaphore>, std::shared_ptr<gpu::semaphore>> AcquirePresentSemaphores = Swapchain->get_acquire_present_semaphore_pair();
+
+			// // Execute Draw Call for acquired image.
+			// Context->execute_and_wait(gpu::device::operation::GRAPHICS, DrawCalls[Swapchain->DrawIndex].CommandBuffer);
+
 		}
 
 	}
