@@ -105,7 +105,10 @@ int main(int aArgCount, char* aArgValues[]) {
 		std::shared_ptr<gpu::buffer> VertexBuffer;
 		std::shared_ptr<gpu::pipeline> RasterizationPipeline;
 		std::shared_ptr<gpu::command_pool> CommandPool;
-		std::vector<std::shared_ptr<gpu::command_batch>> Batch(Swapchain->Image.size());
+		// This is why I hate swapchains.
+		std::vector<std::shared_ptr<gpu::command_buffer>> ClearScreenCommandBuffer(Swapchain->Image.size());
+		std::vector<std::shared_ptr<gpu::command_buffer>> DrawCall(Swapchain->Image.size());
+		std::vector<std::shared_ptr<gpu::command_buffer>> FinalTransitionCommandBuffer(Swapchain->Image.size());
 
 		// Do Stuff
 		{
@@ -195,14 +198,13 @@ int main(int aArgCount, char* aArgValues[]) {
 
 			// Create Draw Calls for swapchain.
 			for (size_t i = 0; i < Swapchain->Image.size(); ++i) {
-				Batch[i] = geodesy::make<gpu::command_batch>();
 				// Transition swapchain image layout to SHADER READ
 				{
 					auto CommandBuffer = CommandPool->create<gpu::command_buffer>();
 					CommandBuffer->begin();
 					Swapchain->Image[i]["Color"]->transition(CommandBuffer.get(), gpu::image::layout::PRESENT_SRC_KHR, gpu::image::layout::SHADER_READ_ONLY_OPTIMAL);
 					CommandBuffer->end();
-					Batch[i]->CommandBufferList.push_back(CommandBuffer);
+					ClearScreenCommandBuffer[i] = CommandBuffer;
 				}
 
 				// Actual Draw Call
@@ -210,7 +212,7 @@ int main(int aArgCount, char* aArgValues[]) {
 					std::vector<std::shared_ptr<gpu::image>> imageVec = { Swapchain->Image[i]["Color"] };
 					std::vector<std::shared_ptr<gpu::buffer>> bufferVec = { VertexBuffer };
 					auto CommandBuffer = CommandPool->create<gpu::executable_call>(RasterizationPipeline, imageVec, bufferVec);
-					Batch[i]->CommandBufferList.push_back(CommandBuffer);
+					DrawCall[i] = CommandBuffer;
 				}
 
 				// Transition back for presentation.
@@ -219,7 +221,7 @@ int main(int aArgCount, char* aArgValues[]) {
 					CommandBuffer->begin();
 					Swapchain->Image[i]["Color"]->transition(CommandBuffer.get(), gpu::image::layout::SHADER_READ_ONLY_OPTIMAL, gpu::image::layout::PRESENT_SRC_KHR);
 					CommandBuffer->end();
-					Batch[i]->CommandBufferList.push_back(CommandBuffer);
+					FinalTransitionCommandBuffer[i] = CommandBuffer;
 				}
 			}
 		}
@@ -234,22 +236,22 @@ int main(int aArgCount, char* aArgValues[]) {
 			// Acquire next image from swapchain.
 			std::pair<std::shared_ptr<gpu::semaphore>, std::shared_ptr<gpu::semaphore>> AcquirePresentSemaphores = Swapchain->get_acquire_present_semaphore_pair();
 
-			std::shared_ptr<gpu::command_batch> CommandBatch;
-
-			// Clear semaphore lists from previous frame
-			Batch[Swapchain->DrawIndex]->WaitSemaphoreList.clear();
-			Batch[Swapchain->DrawIndex]->WaitStageList.clear();
-			Batch[Swapchain->DrawIndex]->SignalSemaphoreList.clear();
+			std::shared_ptr<gpu::command_batch> Submission = geodesy::make<gpu::command_batch>();
 
 			// Make sure image is acquired before drawing.
-			Batch[Swapchain->DrawIndex]->WaitSemaphoreList.push_back(AcquirePresentSemaphores.first);
-			Batch[Swapchain->DrawIndex]->WaitStageList.push_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+			Submission->WaitSemaphoreList.push_back(AcquirePresentSemaphores.first);
+			Submission->WaitStageList.push_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+			// Add command buffers to submission batch.
+			Submission->CommandBufferList.push_back(ClearScreenCommandBuffer[Swapchain->DrawIndex]);
+			Submission->CommandBufferList.push_back(DrawCall[Swapchain->DrawIndex]);
+			Submission->CommandBufferList.push_back(FinalTransitionCommandBuffer[Swapchain->DrawIndex]);
 
 			// Make sure presentation waits on rendering.
-			Batch[Swapchain->DrawIndex]->SignalSemaphoreList.push_back(AcquirePresentSemaphores.second);
+			Submission->SignalSemaphoreList.push_back(AcquirePresentSemaphores.second);
 
 			// Execute Draw Call for acquired image.
-			Context->execute_and_wait(gpu::device::operation::GRAPHICS, std::vector<std::shared_ptr<gpu::command_batch>>{ Batch[Swapchain->DrawIndex] });
+			Context->execute_and_wait(gpu::device::operation::GRAPHICS, std::vector<std::shared_ptr<gpu::command_batch>>{ Submission });
 
 		}
 
