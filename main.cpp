@@ -45,6 +45,9 @@ int main(int aArgCount, char* aArgValues[]) {
 			std::set<std::string> InstanceLayers;
 			std::set<std::string> InstanceExtensions = load_glfw_instance_extensions();
 
+			InstanceLayers.insert("VK_LAYER_KHRONOS_validation");
+			// InstanceExtensions.insert(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
 			glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 			glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
@@ -53,7 +56,7 @@ int main(int aArgCount, char* aArgValues[]) {
 
 			// Insure instances gets cleared before glfwTerminate is called.
 			Instance = geodesy::make<gpu::instance>(
-				(void*)glfwGetInstanceProcAddress,
+				(void*)vkGetInstanceProcAddr,
 				std::array<int, 3>{ 1, 2, 0 },
 				InstanceLayers,
 				InstanceExtensions
@@ -90,7 +93,7 @@ int main(int aArgCount, char* aArgValues[]) {
 			SwapchainCreateInfo.FrameRate					= 60.0f;
 			SwapchainCreateInfo.PixelFormat					= gpu::image::format::B8G8R8A8_UNORM;
 			SwapchainCreateInfo.ColorSpace					= gpu::swapchain::colorspace::SRGB_NONLINEAR;
-			SwapchainCreateInfo.ImageUsage					= gpu::image::usage::COLOR_ATTACHMENT;
+			SwapchainCreateInfo.ImageUsage					= gpu::image::usage::COLOR_ATTACHMENT | gpu::image::usage::SAMPLED;
 			SwapchainCreateInfo.CompositeAlpha				= gpu::swapchain::composite::ALPHA_OPAQUE;
 			SwapchainCreateInfo.PresentMode					= gpu::swapchain::present_mode::FIFO;
 			SwapchainCreateInfo.Clipped						= VK_TRUE;
@@ -177,6 +180,13 @@ int main(int aArgCount, char* aArgValues[]) {
 			// Describe the Swapchain Image to the Rasterizer
 			Rasterizer->attach(0, Swapchain->Image[0]["Color"]);
 
+			// We are rendering triangles.
+			Rasterizer->InputAssembly.topology 					= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+			// Simple polygon fill
+			Rasterizer->Rasterizer.polygonMode 					= VK_POLYGON_MODE_FILL;
+			Rasterizer->Rasterizer.cullMode 					= VK_CULL_MODE_NONE;
+
 			// Generate Actual GPU Rasterization Pipeline
 			RasterizationPipeline = Context->create<gpu::pipeline>(Rasterizer);
 
@@ -225,6 +235,11 @@ int main(int aArgCount, char* aArgValues[]) {
 			std::pair<std::shared_ptr<gpu::semaphore>, std::shared_ptr<gpu::semaphore>> AcquirePresentSemaphores = Swapchain->get_acquire_present_semaphore_pair();
 
 			std::shared_ptr<gpu::command_batch> CommandBatch;
+
+			// Clear semaphore lists from previous frame
+			Batch[Swapchain->DrawIndex]->WaitSemaphoreList.clear();
+			Batch[Swapchain->DrawIndex]->WaitStageList.clear();
+			Batch[Swapchain->DrawIndex]->SignalSemaphoreList.clear();
 
 			// Make sure image is acquired before drawing.
 			Batch[Swapchain->DrawIndex]->WaitSemaphoreList.push_back(AcquirePresentSemaphores.first);

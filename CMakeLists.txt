@@ -44,7 +44,7 @@ include(FetchContent)
 
 # Dependencies go here. (Examples commented out)
 fetch_dependency(https://github.com/FermionicChaos/geodesy-math.git master geodesy-math)
-fetch_dependency(https://github.com/FermionicChaos/geodesy-gpu.git master geodesy-gpu VULKAN_SDK_STATIC_LIB=OFF VULKAN_SDK_VERSION=1.4.321.0)
+fetch_dependency(https://github.com/FermionicChaos/geodesy-gpu.git master geodesy-gpu VULKAN_SDK_STATIC_LIB=ON VULKAN_SDK_VERSION=1.4.321.0)
 fetch_dependency(https://github.com/glfw/glfw.git 3.4 glfw BUILD_SHARED_LIBS=OFF GLFW_BUILD_WAYLAND=OFF)
 
 set(PROJECT_NAME "im-lazy")
