@@ -18,16 +18,25 @@ function(fetch_dependency AGIT_REPO AGIT_TAG ANAME)
         GIT_TAG        ${AGIT_TAG}
         SOURCE_DIR     ${CMAKE_SOURCE_DIR}/dep/${ANAME}-src
     )
-
-    # Apply cache variables
+    
+    # Apply cache variables with intelligent type detection and FORCE override
+    # CRITICAL: Set these BEFORE FetchContent_Declare
     foreach(arg IN LISTS ARGN)
         string(REPLACE "=" ";" kv "${arg}")
         list(GET kv 0 key)
         list(GET kv 1 val)
-        set(${key} ${val} CACHE BOOL "")
+       
+        # Determine the appropriate cache variable type based on value
+        if(val MATCHES "^(ON|OFF|TRUE|FALSE)$")
+            # Boolean values
+            set(${key} ${val} CACHE BOOL "Forced by fetch_dependency for ${ANAME}" FORCE)
+        else()
+            # Everything else as STRING
+            set(${key} ${val} CACHE STRING "Forced by fetch_dependency for ${ANAME}" FORCE)
+        endif()
     endforeach()
-
-    # Actually fetch it
+    
+    # Actually fetch it - cache variables should now be available to subdirectory
     FetchContent_MakeAvailable(${ANAME})
 endfunction()
 
@@ -35,7 +44,7 @@ include(FetchContent)
 
 # Dependencies go here. (Examples commented out)
 fetch_dependency(https://github.com/FermionicChaos/geodesy-math.git master geodesy-math)
-fetch_dependency(https://github.com/FermionicChaos/geodesy-gpu.git master geodesy-gpu VULKAN_SDK_VERSION=1.4.321.0)
+fetch_dependency(https://github.com/FermionicChaos/geodesy-gpu.git master geodesy-gpu VULKAN_SDK_STATIC_LIB=OFF VULKAN_SDK_VERSION=1.4.321.0)
 fetch_dependency(https://github.com/glfw/glfw.git 3.4 glfw BUILD_SHARED_LIBS=OFF GLFW_BUILD_WAYLAND=OFF)
 
 set(PROJECT_NAME "im-lazy")

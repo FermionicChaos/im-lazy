@@ -102,7 +102,7 @@ int main(int aArgCount, char* aArgValues[]) {
 		std::shared_ptr<gpu::buffer> VertexBuffer;
 		std::shared_ptr<gpu::pipeline> RasterizationPipeline;
 		std::shared_ptr<gpu::command_pool> CommandPool;
-		std::vector<gpu::executable_call> DrawCalls(Swapchain->Image.size());
+		std::vector<std::shared_ptr<gpu::command_batch>> Batch(Swapchain->Image.size());
 
 		// Do Stuff
 		{
@@ -185,13 +185,32 @@ int main(int aArgCount, char* aArgValues[]) {
 
 			// Create Draw Calls for swapchain.
 			for (size_t i = 0; i < Swapchain->Image.size(); ++i) {
-				DrawCalls[i] = gpu::executable_call(
-					Context,
-					CommandPool,
-					RasterizationPipeline,
-					{ Swapchain->Image[i]["Color"] },
-					{ VertexBuffer }
-				);
+				Batch[i] = geodesy::make<gpu::command_batch>();
+				// Transition swapchain image layout to SHADER READ
+				{
+					auto CommandBuffer = CommandPool->create<gpu::command_buffer>();
+					CommandBuffer->begin();
+					Swapchain->Image[i]["Color"]->transition(CommandBuffer.get(), gpu::image::layout::PRESENT_SRC_KHR, gpu::image::layout::SHADER_READ_ONLY_OPTIMAL);
+					CommandBuffer->end();
+					Batch[i]->CommandBufferList.push_back(CommandBuffer);
+				}
+
+				// Actual Draw Call
+				{
+					std::vector<std::shared_ptr<gpu::image>> imageVec = { Swapchain->Image[i]["Color"] };
+					std::vector<std::shared_ptr<gpu::buffer>> bufferVec = { VertexBuffer };
+					auto CommandBuffer = CommandPool->create<gpu::executable_call>(RasterizationPipeline, imageVec, bufferVec);
+					Batch[i]->CommandBufferList.push_back(CommandBuffer);
+				}
+
+				// Transition back for presentation.
+				{
+					auto CommandBuffer = CommandPool->create<gpu::command_buffer>();
+					CommandBuffer->begin();
+					Swapchain->Image[i]["Color"]->transition(CommandBuffer.get(), gpu::image::layout::SHADER_READ_ONLY_OPTIMAL, gpu::image::layout::PRESENT_SRC_KHR);
+					CommandBuffer->end();
+					Batch[i]->CommandBufferList.push_back(CommandBuffer);
+				}
 			}
 		}
 
@@ -199,14 +218,23 @@ int main(int aArgCount, char* aArgValues[]) {
 		while (!glfwWindowShouldClose(Window)) {
 			glfwPollEvents();
 
-			// // Get index of next swapchain image.
-			// VkResult Result = Swapchain->next_frame();
+			// Get index of next swapchain image.
+			VkResult Result = Swapchain->next_frame();
 
-			// // Acquire next image from swapchain.
-			// std::pair<std::shared_ptr<gpu::semaphore>, std::shared_ptr<gpu::semaphore>> AcquirePresentSemaphores = Swapchain->get_acquire_present_semaphore_pair();
+			// Acquire next image from swapchain.
+			std::pair<std::shared_ptr<gpu::semaphore>, std::shared_ptr<gpu::semaphore>> AcquirePresentSemaphores = Swapchain->get_acquire_present_semaphore_pair();
 
-			// // Execute Draw Call for acquired image.
-			// Context->execute_and_wait(gpu::device::operation::GRAPHICS, DrawCalls[Swapchain->DrawIndex].CommandBuffer);
+			std::shared_ptr<gpu::command_batch> CommandBatch;
+
+			// Make sure image is acquired before drawing.
+			Batch[Swapchain->DrawIndex]->WaitSemaphoreList.push_back(AcquirePresentSemaphores.first);
+			Batch[Swapchain->DrawIndex]->WaitStageList.push_back(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+			// Make sure presentation waits on rendering.
+			Batch[Swapchain->DrawIndex]->SignalSemaphoreList.push_back(AcquirePresentSemaphores.second);
+
+			// Execute Draw Call for acquired image.
+			Context->execute_and_wait(gpu::device::operation::GRAPHICS, std::vector<std::shared_ptr<gpu::command_batch>>{ Batch[Swapchain->DrawIndex] });
 
 		}
 
