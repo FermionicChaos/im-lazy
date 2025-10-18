@@ -162,7 +162,7 @@ int main(int aArgCount, char* aArgValues[]) {
 			std::vector<std::shared_ptr<gpu::shader>> ShaderList = { VertexShader, FragmentShader };
 
 			// Create Rasterizer SPIRV Binaries and Metadata Reflection
-			std::shared_ptr<gpu::pipeline::rasterizer> Rasterizer = geodesy::make<gpu::pipeline::rasterizer>(ShaderList, Resolution);
+			std::shared_ptr<gpu::pipeline::rasterizer> Rasterizer = geodesy::make<gpu::pipeline::rasterizer>(ShaderList);
 
 			// Describe the Vertex Buffer Layout to the Rasterizer
 			Rasterizer->bind(0, sizeof(vertex), 0, offsetof(vertex, Position), gpu::pipeline::input_rate::VERTEX); // Position
@@ -171,12 +171,10 @@ int main(int aArgCount, char* aArgValues[]) {
 			// Describe the Swapchain Image to the Rasterizer
 			Rasterizer->attach(0, Swapchain->Image[0]["Color"]);
 
-			// We are rendering triangles.
-			Rasterizer->InputAssembly.topology 					= VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-			// Simple polygon fill
-			Rasterizer->Rasterizer.polygonMode 					= VK_POLYGON_MODE_FILL;
-			Rasterizer->Rasterizer.cullMode 					= VK_CULL_MODE_NONE;
+			// We are rendering triangles, with simple polygon fill.
+			Rasterizer->Resolution = { Resolution[0], Resolution[1], 1 };
+			Rasterizer->PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			Rasterizer->PolygonMode = VK_POLYGON_MODE_FILL;
 
 			// Generate Actual GPU Rasterization Pipeline
 			RasterizationPipeline = Context->create<gpu::pipeline>(Rasterizer);
