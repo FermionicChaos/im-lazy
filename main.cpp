@@ -172,7 +172,6 @@ int main(int aArgCount, char* aArgValues[]) {
 			Rasterizer->attach(0, Swapchain->Image[0]["Color"]);
 
 			// We are rendering triangles, with simple polygon fill.
-			Rasterizer->Resolution = { Resolution[0], Resolution[1], 1 };
 			Rasterizer->PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			Rasterizer->PolygonMode = VK_POLYGON_MODE_FILL;
 
@@ -197,7 +196,7 @@ int main(int aArgCount, char* aArgValues[]) {
 				{
 					std::vector<std::shared_ptr<gpu::image>> imageVec = { Swapchain->Image[i]["Color"] };
 					std::vector<std::shared_ptr<gpu::buffer>> bufferVec = { VertexBuffer };
-					auto CommandBuffer = CommandPool->create<gpu::rasterization_call>(RasterizationPipeline, imageVec, bufferVec);
+					auto CommandBuffer = CommandPool->create<gpu::rasterization_call>(RasterizationPipeline, imageVec, Resolution, bufferVec);
 					DrawCall[i] = CommandBuffer;
 				}
 
