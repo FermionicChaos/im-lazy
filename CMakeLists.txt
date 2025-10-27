@@ -16,7 +16,7 @@ function(fetch_dependency AGIT_REPO AGIT_TAG ANAME)
         ${ANAME}
         GIT_REPOSITORY ${AGIT_REPO}
         GIT_TAG        ${AGIT_TAG}
-        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/dep/${ANAME}-src
+        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/dep/${ANAME}
     )
     
     # Apply cache variables with intelligent type detection and FORCE override
@@ -68,9 +68,9 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 
 # Set Include Directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc/)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-math-src/inc/)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-gpu-src/inc/)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/glfw-src/include/)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-math/inc/)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-gpu/inc/)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/glfw/include/)
 
 # Link Libraries Go here.
 target_link_libraries(${PROJECT_NAME} PRIVATE geodesy-gpu)
