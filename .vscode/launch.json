@@ -35,7 +35,7 @@
         "program": "${workspaceFolder}/bin/Windows/Debug/im-lazy.exe",
         "args": [],
         "stopAtEntry": false,
-        "cwd": "$${workspaceFolder}",
+        "cwd": "${workspaceFolder}",
         "environment": [],
         "console": "externalTerminal"
     }
