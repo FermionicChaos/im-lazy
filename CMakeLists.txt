@@ -2,9 +2,12 @@ cmake_minimum_required(VERSION 3.20)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(PROJECT_NAME "im-lazy")
+
+include(FetchContent)
 
 # Utility function for fetching dependencies in one line.
-function(fetch_dependency AGIT_REPO AGIT_TAG ANAME)
+function(fetch_dependency ADEP_NAME AGIT_REPO AGIT_TAG)
     # Remaining args are variable=value pairs for cache options
     set(options)
     set(oneValueArgs)
@@ -13,10 +16,10 @@ function(fetch_dependency AGIT_REPO AGIT_TAG ANAME)
 
     # Declare the dependency
     FetchContent_Declare(
-        ${ANAME}
+        ${ADEP_NAME}
         GIT_REPOSITORY ${AGIT_REPO}
         GIT_TAG        ${AGIT_TAG}
-        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/dep/${ANAME}
+        SOURCE_DIR     ${CMAKE_SOURCE_DIR}/dep/${ADEP_NAME}
     )
     
     # Apply cache variables with intelligent type detection and FORCE override
@@ -29,25 +32,21 @@ function(fetch_dependency AGIT_REPO AGIT_TAG ANAME)
         # Determine the appropriate cache variable type based on value
         if(val MATCHES "^(ON|OFF|TRUE|FALSE)$")
             # Boolean values
-            set(${key} ${val} CACHE BOOL "Forced by fetch_dependency for ${ANAME}" FORCE)
+            set(${key} ${val} CACHE BOOL "Forced by fetch_dependency for ${ADEP_NAME}" FORCE)
         else()
             # Everything else as STRING
-            set(${key} ${val} CACHE STRING "Forced by fetch_dependency for ${ANAME}" FORCE)
+            set(${key} ${val} CACHE STRING "Forced by fetch_dependency for ${ADEP_NAME}" FORCE)
         endif()
     endforeach()
     
     # Actually fetch it - cache variables should now be available to subdirectory
-    FetchContent_MakeAvailable(${ANAME})
+    FetchContent_MakeAvailable(${ADEP_NAME})
 endfunction()
 
-include(FetchContent)
-
 # Dependencies go here. (Examples commented out)
-fetch_dependency(https://github.com/FermionicChaos/geodesy-math.git master geodesy-math)
-fetch_dependency(https://github.com/FermionicChaos/geodesy-gpu.git master geodesy-gpu VULKAN_SDK_STATIC_LIB=ON VULKAN_SDK_VERSION=1.4.321.0)
-fetch_dependency(https://github.com/glfw/glfw.git 3.4 glfw BUILD_SHARED_LIBS=OFF GLFW_BUILD_WAYLAND=OFF)
-
-set(PROJECT_NAME "im-lazy")
+fetch_dependency(geodesy-math https://github.com/FermionicChaos/geodesy-math.git master)
+fetch_dependency(geodesy-gpu https://github.com/FermionicChaos/geodesy-gpu.git master VULKAN_SDK_STATIC_LIB=ON VULKAN_SDK_VERSION=1.4.321.0)
+fetch_dependency(glfw https://github.com/glfw/glfw.git 3.4 BUILD_SHARED_LIBS=OFF GLFW_BUILD_WAYLAND=OFF)
 
 file(GLOB_RECURSE INC
     "inc/*.h"
