@@ -44,8 +44,7 @@ function(fetch_dependency ADEP_NAME AGIT_REPO AGIT_TAG)
 endfunction()
 
 # Dependencies go here. (Examples commented out)
-fetch_dependency(geodesy-math https://github.com/FermionicChaos/geodesy-math.git master)
-fetch_dependency(geodesy-gpu https://github.com/FermionicChaos/geodesy-gpu.git master VULKAN_SDK_STATIC_LIB=ON VULKAN_SDK_VERSION=1.4.321.0)
+fetch_dependency(geodesy-graphics https://github.com/FermionicChaos/geodesy-graphics.git master VULKAN_SDK_STATIC_LIB=ON VULKAN_SDK_VERSION=1.4.321.0)
 fetch_dependency(glfw https://github.com/glfw/glfw.git 3.4 BUILD_SHARED_LIBS=OFF GLFW_BUILD_WAYLAND=OFF)
 
 file(GLOB_RECURSE INC
@@ -68,10 +67,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 # Set Include Directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc/)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-math/inc/)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-gpu/inc/)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/geodesy-graphics/inc/)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dep/glfw/include/)
 
 # Link Libraries Go here.
-target_link_libraries(${PROJECT_NAME} PRIVATE geodesy-gpu)
+target_link_libraries(${PROJECT_NAME} PRIVATE geodesy-graphics)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 

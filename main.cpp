@@ -4,7 +4,9 @@
 #include <GLFW/glfw3.h>
 
 #include <geodesy/math.h>
+#include <geodesy/phys.h>
 #include <geodesy/gpu.h>
+#include <geodesy/gfx.h>
 
 using namespace geodesy;
 
